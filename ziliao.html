@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html >
+  <head >
+    <meta charset="utf-8" >
+    <title >资料</title>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=AM_HTMLorMML-full"></script>
+  </head>
+  <body >
+	做题顺序<br>
+	第一步：看材料，画出时间，主题，单位<br>
+	第二步：看题目，判断题型<br>
+	第三步：找到题型对应公式<br>
+	第四步：到材料中找数，代入公式<br>
+	第五步：看选项，估算结果<br>
+	<hr>
+	题型<br>
+    <table border="1">
+      <tbody>
+        <tr>
+          <td colspan="1" rowspan="1">a1</td>
+          <td colspan="1" rowspan="1">基期量</td>
+        </tr>
+        <tr>
+          <td colspan="1" rowspan="1">a2</td>
+          <td colspan="1" rowspan="1">现期量</td>
+        </tr>
+        <tr>
+          <td colspan="1" rowspan="1">Δ<br clear="none"></td>
+          <td colspan="1" rowspan="1">增长量</td>
+        </tr>
+        <tr>
+          <td colspan="1" rowspan="1">r</td>
+          <td colspan="1" rowspan="1">增长率</td>
+        </tr>
+        <tr>
+          <td colspan="1" rowspan="1">t</td>
+          <td colspan="1" rowspan="1">倍数</td>
+        </tr>
+        <tr>
+          <td colspan="1" rowspan="1">p</td>
+          <td colspan="1" rowspan="1">比重</td>
+        </tr>
+        <tr>
+          <td colspan="1" rowspan="1">m</td>
+          <td colspan="1" rowspan="1">平均数</td>
+        </tr>
+      </tbody>
+    </table>
+    <br><br>
+    `a_1=a_2 - Δ =a_2/(1+r) = Δ/r`<br>
+    `a_2 = a_1 + Δ=a_1*(1+r)`<br>
+    <hr>
+    `Δ=a_2-a_1 = a_2 - a_2/(1+r) = a_2*r/(1+r) = a_2/(1/r + 1) = a_1*r≈a_2*r`<br>
+	Δ比较，`a_2`越大，Δ越大，r越大，Δ越大，`a_2*r`越大，Δ越大
+    <hr>
+    `r =( a_2 - a_1) / a_1 = a_2/a_1-1`<br>
+    `r_总 = (1+r_1)*(1+r_2) -1=r_1+r_2 + r_1*r_2`<br>
+    `r_总=(1+r_均)^n - 1`<br>
+    `r_混=(a_上*r_上+a_下*r_下)/(a_上+a_下)`<br>
+    <br>
+    `r_总`与`r_均`的关系<br>
+    `r_总=r_1+r_2+Δ=n*r_均+Δ`<br>
+    所以 `r_总 &gt; r_1+r_2`即`r_总&gt;r_i`之和<br>
+    所以 `r_总 &gt; n*r_均`即`r_总&gt;r_均`之和<br>
+    所以 `r_总/n &gt; r_均`即`r_总`的平均数`&gt;r_均`<br>
+    <br>
+    <br>
+    如果`r_i &gt; r`，那么`r_均 &gt; r`<br>
+    证明：因为`r_总=（1+r_1)(1+r_2) -1 =(1+r_均)(1+r_均) - 1 &gt; (1+r)(1+r)-1`，所以`r_均&gt;r`<br>
+    如果`r_i &lt; r`，那么`r_均 &lt; r`<br>
+    证明：因为`r_总=（1+r_1)(1+r_2) -1 =(1+r_均)(1+r_均) - 1 &lt; (1+r)(1+r)-1`，所以`r_均&lt;r`<br>
+	<br>
+    斜率与r的关系<br>
+    斜率相同，那么Δ 相同，r减小<br>
+    r相同，那么Δ 增大，斜率增大<br>
+
+    <hr>
+    `t_2=a_2/b_2`<br>
+    `t_1=a_1/b_1=a_2/(1+r_a)/b_2/(1+r_b)=a_2/b_2*(1+r_b)/(1+r_a)`<br>
+    `t_混=(a_上*t_上+a_下*t_下)/(a_上+a_下)`<br>
+    <hr>
+    `p_2=a_2/b_2`<br>
+    `p_1=a_1/b_1=a_2/(1+r_a)/b_2/(1+r_b)=a_2/b_2*(1+r_b)/(1+r_a)`<br>
+    `p_2-p_1=a_2/b_2-a_1/b_1=a_2/b_2-a_2/b_2*(1+r_b)/(1+r_a)=a_2/b_2*(r_a-r_b)/(1+r_a)`<br>
+    `p_混=(a_上*p_上+a_下*p_下)/(a_上+a_下)`<br>
+    <hr>
+    `m_2=a_2/b_2`<br>
+    `m_1=a_1/b_1=a_2/(1+r_a)/b_2/(1+r_b)=a_2/b_2*(1+r_b)/(1+r_a)`<br>
+    `m_2-m_1=a_2/b_2-a_1/b_1=a_2/b_2-a_2/b_2*(1+r_b)/(1+r_a)=a_2/b_2*(r_a-r_b)/(1+r_a)`<br>
+    `(m_2-m_1)/m_1=a_2/b_2*(r_a-r_b)/(1+r_a)/[a_2/b_2*(1+r_b)/(1+r_a)]=(r_a-r_b)/(1+r_b)`<br>
+    `m_混=(a_上*m_上+a_下*m_下)/(a_上+a_下)`<br>
+
+    <img src="images/混合.jpg"><br>
+    <br>
+    由混合公式得到十字交叉法：<br>
+    `m_混*(a_上+a_下)=(a_上*m_上+a_下*m_下)`<br>
+    `a_上*(m_混-m_上)=a_下*(m_下-m_混)`<br>
+    `a_上/a_下=(m_下-m_混)/(m_混-m_上)`<br>
+    <br>
+    <img src="images/十字.jpg"><br>
+	<hr>
+	计算技巧<br>
+	一、加法<br>
+	（一）尾数法<br>
+	精确求和<br>
+	（二）从左向右逐位相加法<br>
+	非精确求和<br>
+	（三）基准数法<br>
+	用于几个相近的数求和，先确定一个基准数<br>
+	二、减法<br>
+	（一）尾数法<br>
+	精确求差<br>
+	（二）中间数法<br>
+	两个数相减，从中间找一个整数<br>
+	（三）从左向右逐位相减<br>
+	三、乘法<br>
+	（一）分配<br>
+	A×R = A×R1+A×R2<br>
+	四、除法<br>
+	（一）直除首数法<br>
+	1 一步除法：只截分母<br>
+	2 多步除法：分母分子都截<br>
+
+	选项首位不同，截取两位<br>
+	选项首位相同，截取三位<br>
+
+	选项之间差别在10%以上，截取两位<br>
+	选项之间差别在10%以下，截取三位<br>
+	（二）拆分<br>
+	分子与分母接近，用100%减<br>
+	分子为分母50%时，先拆出50%<br>
+	当分子很小时，可根据实际情况拆出10%，5%，1%<br>
+	（三）除化乘<br>
+	A/1+r 约等于A（1-r）当|r|小于5%时<br>
+	上下同乘1-r，分母变成1-r×r≈1<br>
+	（四）假设分配<br>
+	多用于已知a2 r，求a1 Δ<br>
+	r&lt;10%或r不太容易化为分数时<br>
+	能初步判断出a1靠近一个整数<br>
+	r为负数时，不适用此方法<br>
+
+	（五）浓度思想<br>
+	分数的分子分母可以分别拆分成两部分，满足一大杯与一小勺的关系<br>
+	拆出的一大杯比较好计算，结果应该在拆成的两个分数之间<br>
+	<hr>
+	小分互化<br>
+    
+    <table border="1">
+      <tr>
+        <td>`1/1=100%`</td>
+        <td>`1/2=50%`</td>
+        <td>`1/3=33.3%`</td>
+        <td>`1/4=25%`</td>
+        <td>`1/5=20%`</td>
+      </tr>
+      <tr>
+        <td>`1/6=16.7%`</td>
+        <td>`1/7=14.3%`</td>
+        <td>`1/8=12.5%`</td>
+        <td>`1/9=11.1%`</td>
+        <td>`1/10=10%`</td>
+      </tr>
+      <tr>
+        <td>`1/11=9.1%`</td>
+        <td>`1/12=8.3%`</td>
+        <td>`1/13=7.7%`</td>
+        <td>`1/14=7.1%`</td>
+        <td>`1/15=6.7%`</td>
+      </tr>
+      <tr>
+        <td>`1/16=6.25%`</td>
+        <td>`1/17=5.9%`</td>
+        <td>`1/18=5.6%`</td>
+        <td>`1/19=5.3%`</td>
+        <td>`1/20=5%`</td>
+      </tr>
+    </table>
+	多用于已知`a_2`和r求Δ，`Δ= a_2/(1/r + 1)`，如果令`r≈1/n`，则`Δ≈a_2/(n+1)`<br>
+	估小选大，估大选小<br>
+    <hr>
+    分数比较<br>
+    `a/b &gt; m/n `,当a&gt;m,b&lt;n<br>
+    `a/b &lt; m/n `,(a&lt;m,b&lt;n),当 a到m变化速度大于，b到n变化速度<br>
+    `a/b &lt; m/n &lt; (m-a)/(n-b) ,(a&lt;m,b&lt;n),当m/n &lt; (m-a)/(n-b)`<br>
+    `a/b &gt; m/n &gt; (m-a)/(n-b) ,(a&lt;m,b&lt;n),当m/n &gt; (m-a)/(n-b)`<br>
+    <hr>
+    </body>
+</html>
