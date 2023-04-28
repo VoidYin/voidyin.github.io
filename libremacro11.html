@@ -1,0 +1,650 @@
+<p>
+    11. The Dispatcher
+</p>
+<p>
+    This chapter builds on previous coverage of the OpenOffice.org paradigm and then introduces the dispatcher. The
+    dispatcher provides a simple mechanism for invoking internal functionality with limited
+</p>
+<p>
+    knowledge of how the internals work, but it is considered the least-favored way of controlling OpenOffice.org.
+</p>
+<h1 id="the-environment">
+    11.1. The environment
+</h1>
+<p>
+    OpenOffice.org separates a component’s (document's) functionality into the model, the controller, and the frame.
+</p>
+<h1 id="frame">
+    FRAME
+</h1>
+<blockquote>
+    <p>
+        Combines the pieces; it contains a model’s controller and knows all about the display window. The frame does
+        not, however, have any display window functionality; the frame just knows that display windows exist.
+    </p>
+    <p>
+        Send a dispatch to the frame, because it controls things and knows how to route a dispatch.
+    </p>
+</blockquote>
+<table border="1">
+    <colgroup>
+        <col style="width: 49%" />
+        <col style="width: 2%" />
+        <col style="width: 47%" />
+    </colgroup>
+    <thead>
+        <tr class="header">
+            <th>
+                <blockquote>
+                    <p>
+                        Model
+                    </p>
+                </blockquote>
+                <p>
+                    Consists of the document data and the methods to change the data.
+                </p>
+                <p>
+                    You can update data directly using the model.
+                </p>
+            </th>
+            <th>
+            </th>
+            <th>
+                <blockquote>
+                    <p>
+                        Controller
+                    </p>
+                </blockquote>
+                <p>
+                    Aware of the current view and the data; it manipulates the document while receiving input from the
+                    user interface.
+                </p>
+                <p>
+                    The controller knows things like what is selected and is able to select things.
+                </p>
+            </th>
+        </tr>
+    </thead>
+    <tbody> </tbody>
+</table>
+<blockquote>
+    <p>
+        TIP Component almost always means an open document, but other windows are also components; for example, the
+        Basic IDE and the help window.
+    </p>
+</blockquote>
+<h2 id="two-different-methods-to-control-ooo">
+    11.1.1. Two different methods to control OOo
+</h2>
+<p>
+    The most versatile method to manipulate an OOo document is to get the internal UNO objects and manipulate them.
+    Using the model provides significant control, but you must understand much about the different services and
+    interfaces.
+</p>
+<p>
+    Another method, which requires very little understanding of the OOo internals, is to use a UNO dispatcher. The
+    dispatcher accepts a command such as “.uno:Undo” and takes care of the rest of the details. The frame provides the
+    required dispatchers to perform the work. For simplicity, think of issuing a dispatch as very similar to selecting
+    an action from the menu.
+</p>
+<p>
+    Although direct control using UNO services provides the most control and versatility, some operations are much
+    easier to perform using the dispatcher; sometimes a dispatcher is the only way to accomplish a task. For example,
+    the dispatcher is the best solution for handling the clipboard. Even the macro recorder performs almost all tasks
+    using a dispatcher.
+</p>
+<p>
+    Three things are required to accomplish tasks using a dispatcher: (1) the command to dispatch, (2) arguments that
+    control the dispatch, and (3) an object capable of performing the dispatch (a dispatch provider, which is usually a
+    frame). Each document has a controller that, loosely speaking, acts as the interface between the outside world and
+    the document. For example, use the current controller to select text, find the current cursor location, or determine
+    which sheet is active in a spreadsheet. The current controller can also return the frame of the document, which
+    supports the dispatch command. Listing 241. The DispatchHelper service greatly simplifies executing dispatches.
+    oDispHelper = createUnoService("com.sun.star.frame.DispatchHelper")
+</p>
+<p>
+    The dispatch helper implements the function executeDispatch, which implements most of the functionality required to
+    perform a dispatch. Table 94 contains a list of the arguments supported by the executeDispatch method.
+</p>
+<p>
+    While executing a dispatch, as discussed here, you cannot dispatch a command to a frame based on its name — either
+    leave the target frame empty or enter “_self”. It is also, therefore, not important to use anything other than zero,
+    or omit the argument completely, for the search flag. Attempting to specify another frame results in a run-time
+    error (it seems silly to me that the arguments exist if they are not usable<a href="#fn1" class="footnote-ref"
+        id="fnref1" role="doc-noteref"><sup>1</sup></a>).
+</p>
+<p>
+    Table 94. Arguments to executeDispatch.
+</p>
+<table border="1">
+    <colgroup>
+        <col style="width: 24%" />
+        <col style="width: 75%" />
+    </colgroup>
+    <thead>
+        <tr class="header">
+            <th>
+                <blockquote>
+                    <p>
+                        Argument
+                    </p>
+                </blockquote>
+            </th>
+            <th>
+                <blockquote>
+                    <p>
+                        Description
+                    </p>
+                </blockquote>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="odd">
+            <td>
+                <blockquote>
+                    <p>
+                        XDispatchProvider
+                    </p>
+                </blockquote>
+            </td>
+            <td>
+                Dispatch provider that performs the dispatch.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                <blockquote>
+                    <p>
+                        URL String
+                    </p>
+                </blockquote>
+            </td>
+            <td>
+                The command to dispatch, as a string.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                <blockquote>
+                    <p>
+                        Target Frame String
+                    </p>
+                </blockquote>
+            </td>
+            <td>
+                Identifies the frame that will receive the dispatch. Use an empty string or “_self” to specify the
+                current frame (any other value is invalid).
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                <blockquote>
+                    <p>
+                        long
+                    </p>
+                </blockquote>
+            </td>
+            <td>
+                Optional search flags that indicate how to find the target frame. Use zero or blank (see Listing 242),
+                because it is not supported.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                <blockquote>
+                    <p>
+                        PropertyValue()
+                    </p>
+                </blockquote>
+            </td>
+            <td>
+                Optional arguments that are dependent on the implementation.
+            </td>
+        </tr>
+    </tbody>
+</table>
+<blockquote>
+    <p>
+        Listing 242. Execute the “undo” dispatch.
+    </p>
+    <p>
+        Sub NewUndo
+    </p>
+    <p>
+        Dim oDispHelper as object
+    </p>
+    <p>
+        Dim oProvider As Object
+    </p>
+    <p>
+        oProvider = ThisComponent.CurrentController.Frame
+    </p>
+    <p>
+        oDispHelper = createUnoService("com.sun.star.frame.DispatchHelper")
+        oDispHelper.executeDispatch(oProvider,".uno:Undo", "", , Array()) End Sub
+    </p>
+</blockquote>
+<p>
+    The dispatch commands have both a name and a number, called a “slot.” Although a dispatch can be made based on
+    either, the developers told me that the slot number may change in the future so it is safer to use the name. If you
+    must use a slot, the Tools library contains a subroutine called DispatchSlot, which performs a dispatch based on a
+    slot number alone. Listing 243. Dispatch to a numeric slot.
+</p>
+<blockquote>
+    <p>
+        'Include this library to use the DispatchSlot command.
+    </p>
+    <p>
+        GlobalScope.BasicLibraries.LoadLibrary("Tools")
+    </p>
+    <p>
+        DispatchSlot(5301) 'Load the About dialog, same as ".uno:About"
+    </p>
+    <p>
+        TIP You cannot call a routine in a library unless the library is loaded. You can load a library manually from
+        the Macro dialog and you can load it using the LoadLibrary command as shown in Listing 243. The Tools library
+        included with OOo contains the DispatchSlot subroutine.
+    </p>
+</blockquote>
+<p>
+    Some dispatch commands require arguments. The example in Listing 244 perform a dispatch with arguments. The GoToCell
+    command needs to know which cell to go to. This macro moves the current cursor to the cell B3 in a spreadsheet
+    document. Listing 244. Dispatch commands can use arguments.
+</p>
+<blockquote>
+    <p>
+        Dim args2(0) as new com.sun.star.beans.PropertyValue args2(0).Name = "ToPoint"
+    </p>
+    <p>
+        args2(0).Value = "$B$3" ' position to B3
+    </p>
+    <p>
+        Dim oDispHelper as object
+    </p>
+    <p>
+        Dim oProvider As Object
+    </p>
+    <p>
+        oProvider = ThisComponent.CurrentController.Frame
+    </p>
+    <p>
+        oDispHelper = createUnoService("com.sun.star.frame.DispatchHelper") oDispHelper.executeDispatch(oProvider,
+        ".uno:GoToCell", "", 0, args2())
+    </p>
+</blockquote>
+<h2 id="finding-dispatch-commands">
+    11.1.2. Finding dispatch commands
+</h2>
+<p>
+    A complete list of dispatch commands is tricky to find. Previously, I assembled a complete list of all supported
+    dispatch commands, but, the list changes and it is not clear to me that it is of much user. As such, I decided to
+    tell you how to find the list on your own. If there is a demand for it, I may be convinced to compile a new list.
+    Thanks to Ariel Constenla Haile for this information.
+</p>
+<p>
+    Use the WIKI
+</p>
+<p>
+    <u>http://wiki.services.openoffice.org/wiki/Framework/Article/OpenOffice.org_3.x_Commands</u> contains a list of
+    commands and slots. Clearly some commands are missing, such as “.uno:ObjectTitleDescription”, but the list is fairly
+    complete.
+</p>
+<p>
+    Probe the interface
+</p>
+<p>
+    The following macro uses the UICommandDescription service to enumerate the supported modules. A new Calc document is
+    created and a sheet is created for each module. The commands supported by the module are placed on the sheet. Note
+    that the macro takes a while to run because there is a lot of data to process. Listing 245. Get commands from the
+    ModuleManager.
+</p>
+<blockquote>
+    <p>
+        Sub Print_All_Commands
+    </p>
+    <p>
+        ' Create a new Calc document to hold the dispatch commands Dim oDoc As Object oDoc =
+        StarDesktop.loadComponentFromURL("private:factory/scalc", "_default", 0, Array())
+    </p>
+    <p>
+        Dim oSheets As Object : oSheets = oDoc.getSheets()
+    </p>
+    <p>
+        'The UICommandDescription service provides access to the user interface commands that are
+    </p>
+    <p>
+        'part of OpenOffice.org modules, like Writer or Calc. Dim oUICommandDescription As Object
+    </p>
+    <p>
+        oUICommandDescription = CreateUnoService("com.sun.star.frame.UICommandDescription")
+    </p>
+    <p>
+        'Identify office modules and provide read access to the configuration of office modules.
+    </p>
+    <p>
+        Dim oModuleIdentifier As Object
+    </p>
+    <p>
+        oModuleIdentifier = CreateUnoService("com.sun.star.frame.ModuleManager")
+    </p>
+    <p>
+        Dim oModuleUICommandDescription As Object, aModules$(),aCommand
+    </p>
+    <p>
+        Dim aCommands$() Dim n&amp;, i&amp;
+    </p>
+    <p>
+        ' Get a list of module names such as "com.sun.star.presentation.PresentationDocument"
+    </p>
+    <p>
+        ' Create a sheet for each module. aModules = oModuleIdentifier.getElementNames()
+    </p>
+    <p>
+        For n = 0 To UBound(aModules)
+    </p>
+    <p>
+        oModuleUICommandDescription = oUICommandDescription.getByName(aModules(n))
+    </p>
+    <p>
+        ' Get the commands supported by this module. ReDim aCommands$() aCommands =
+        oModuleUICommandDescription.getElementNames()
+    </p>
+    <p>
+        If n &lt;= UBound(oSheets.getElementNames()) Then oSheets.getByIndex(n).setName(aModules(n)) Else
+    </p>
+    <p>
+        oSheets.insertNewByName(aModules(n),n) End If
+    </p>
+    <p>
+        oSheets.getCellByPosition(0, 0, n).getText().setString("Command") oSheets.getCellByPosition(1, 0,
+        n).getText().setString("Label") oSheets.getCellByPosition(2, 0, n).getText().setString("Name")
+        oSheets.getCellByPosition(3, 0, n).getText().setString("Popup") oSheets.getCellByPosition(4, 0,
+        n).getText().setString("Property")
+    </p>
+    <p>
+        For i = 0 To UBound(aCommands) aCommand = oModuleUICommandDescription.getByName(aCommands(i))
+    </p>
+    <p>
+        Dim sLabel$, sName$, bPopup as Boolean, nProperty&amp;, k%
+    </p>
+    <p>
+        For k = 0 To UBound(aCommand) If aCommand(k).Name = "Label" Then sLabel = aCommand(k).Value ElseIf
+        aCommand(k).Name = "Name" Then sName = aCommand(k).Value
+    </p>
+    <p>
+        ElseIf aCommand(k).Name = "Popup" Then bPopup = aCommand(k).Value
+    </p>
+    <p>
+        ElseIf aCommand(k).Name = "Property" Then nProperty = aCommand(k).Value
+    </p>
+    <p>
+        End If
+    </p>
+    <p>
+        Next
+    </p>
+    <p>
+        oSheets.getCellByPosition(0, i+1, n).getText().setString(aCommands(i)) oSheets.getCellByPosition(1, i+1,
+        n).getText().setString(sLabel) oSheets.getCellByPosition(2, i+1, n).getText().setString(sName) If bPopup Then
+    </p>
+    <p>
+        oSheets.getCellByPosition(3, i+1, n).getText().setString("True") Else
+    </p>
+    <p>
+        oSheets.getCellByPosition(3, i+1, n).getText().setString("False") End If
+    </p>
+    <p>
+        oSheets.getCellByPosition(4, i+1, n).getText().setString(CStr(nProperty))
+    </p>
+    <p>
+        Next
+    </p>
+    <p>
+        Dim oColumns as Object
+    </p>
+    <p>
+        oColumns = oSheets.getByIndex(n).getColumns()
+    </p>
+    <p>
+        Dim j% For j = 0 To 4
+    </p>
+    <p>
+        oColumns.getByIndex(j).setPropertyValue("OptimalWidth", True)
+    </p>
+    <p>
+        Next
+    </p>
+    <p>
+        Next
+    </p>
+    <p>
+        End Sub
+    </p>
+</blockquote>
+<p>
+    XDispatchInformationProvider constructs a list of dispatch commands as returned by the current controller and
+    displays the list in a Calc document. Listing 246. Get commands from the current controller.
+</p>
+<blockquote>
+    <p>
+        Sub XDispatchInformationProvider Dim oDoc As Object oDoc =
+        StarDesktop.loadComponentFromURL("private:factory/scalc", "_default", 0, Array())
+    </p>
+    <p>
+        Dim oSheet As Object : oSheet = oDoc.getSheets().getByIndex(0) oSheet.getCellByPosition(0,
+        0).getText().setString("Group") oSheet.getCellByPosition(1, 0).getText().setString("Command")
+    </p>
+    <p>
+        Dim oController : oController = ThisComponent.getCurrentController()
+    </p>
+    <p>
+        If IsNull(oController) Or _
+    </p>
+    <p>
+        NOT HasUnoInterfaces( oController, "com.sun.star.frame.XDispatchInformationProvider") Then
+    </p>
+    <p>
+        'TODO: some warning
+    </p>
+    <p>
+        Exit Sub
+    </p>
+    <p>
+        End If
+    </p>
+    <p>
+        Dim iSupportedCmdGroups%() iSupportedCmdGroups = oController.getSupportedCommandGroups()
+    </p>
+    <p>
+        Dim i%, j%
+    </p>
+    <p>
+        Dim k%
+    </p>
+    <p>
+        For i = 0 To UBound(iSupportedCmdGroups) Dim aDispatchInfo()
+    </p>
+    <p>
+        aDispatchInfo = oController.getConfigurableDispatchInformation(iSupportedCmdGroups(i))
+    </p>
+    <p>
+        For j = 0 To UBound(aDispatchInfo) Dim aDispatchInformation
+    </p>
+    <p>
+        aDispatchInformation = aDispatchInfo(j) k = k + 1
+    </p>
+    <p>
+        oSheet.getCellByPosition(0, k).getText().setString(iSupportedCmdGroups(i)) oSheet.getCellByPosition(1,
+        k).getText().setString(aDispatchInformation.Command) Next
+    </p>
+    <p>
+        Next
+    </p>
+    <p>
+        End Sub
+    </p>
+</blockquote>
+<p>
+    I exchanged email with a developer who expressed doubts as to the completeness and accuracy of the returned list;
+    because the Bibliographic commands provided by the UICommandDescription included commands such as
+    “.uno:ArrowShapes”, which is nonsensical in this context.
+</p>
+<p>
+    Read source code
+</p>
+<p>
+    SFX2 based components share a common base class for their Controller object implementation, SfxBaseController. For
+    modules based on SFX2, it is possible to obtain the dispatches as well as the arguments by parsing the SDI files
+    inside every sfx2 based module (look at the folder &lt;module&gt;/sdi/); or even parse the header files generated in
+    the build environment. Consider files with names such as sfxslots.hxx, svxslots.hxx, scslots.hxx, sdslots.hxx,
+    swslots.hxx, basslots.hxx, and smslots.hxx.
+</p>
+<p>
+    For new modules it may be easier to just browse the source code; for example, in chart2:
+</p>
+<ul>
+    <li>
+        <p>
+            chart2/source/controller/main/ChartController.cxx
+        </p>
+    </li>
+    <li>
+        <p>
+            chart2/source/controller/main/DrawCommandDispatch.cxx
+        </p>
+    </li>
+    <li>
+        <p>
+            chart2/source/controller/main/ShapeController.cxx
+        </p>
+    </li>
+</ul>
+<p>
+    TIP Dispatch command names are case sensitive.
+</p>
+<h2 id="writing-a-macro-using-the-dispatcher">
+    11.2. Writing a macro using the dispatcher
+</h2>
+<p>
+    When you can’t find a method to accomplish a task using the UNO API, the next choice is usually to use the
+    dispatcher. Macros created by the macro recorder using dispatches; use Tools | Macros | Record Macro to start the
+    macro recorder.
+</p>
+<p>
+    TIP Some component types do not support the macro recorder; for example, Draw.
+</p>
+<p>
+    The macro recorder has many limitations; for example, the macro recorder usually does not track what happens when a
+    dialog is opened. I discovered this limitation when I used the macro recorder to create a macro to import text
+    files. The “Text (encoded)” import filter opens a dialog and asks questions about the imported file. The values
+    entered in the dialog are not captured by the macro recorder.
+</p>
+<p>
+    If you desire to write a macro using the API, start by reading through the supported commands as generated by one of
+    the macros shown above.
+</p>
+<p>
+    The “SendOutLineToStarImpress” command creates an Impress presentation with an outline created from the headings in
+    the current document. No arguments are required. Listing 247. Create an Impress document with an outline from this
+    document.
+</p>
+<blockquote>
+    <p>
+        Sub CreateOutlineInImpress
+    </p>
+    <p>
+        Dim oDispHelper as object
+    </p>
+    <p>
+        Dim oProvider As Object
+    </p>
+    <p>
+        oProvider = ThisComponent.CurrentController.Frame
+    </p>
+    <p>
+        oDispHelper = createUnoService("com.sun.star.frame.DispatchHelper")
+        oDispHelper.executeDispatch(oProvider,".uno:SendOutlineToStarImpress",_
+    </p>
+    <p>
+        "", , Array())
+    </p>
+    <p>
+        End Sub
+    </p>
+</blockquote>
+<h2 id="dispatch-failure-an-advanced-clipboard-example">
+    11.3. Dispatch failure – an advanced clipboard example
+</h2>
+<p>
+    The request was easy, copy an entire Writer document to the clipboard. The macro recorder very quickly provided a
+    solution. Unfortunately, the macro fails in LO when called from a button added to the document; but it works from
+    the IDE and from AOO when called from a button. The solution is to set the focus on the document, before executing
+    the dispatches.
+</p>
+<blockquote>
+    <p>
+        Listing 248. Select all and copy using dispatches.
+    </p>
+    <p>
+        Sub CopyToClipboard_Dispatch dim document as object dim dispatcher as object
+    </p>
+    <p>
+        document = ThisComponent.CurrentController.Frame
+    </p>
+    <p>
+        ' This next line was NOT added by the macro recorder.
+    </p>
+    <p>
+        ' Without the next line, this fails in LO when called from a button. document.ContainerWindow.setFocus
+    </p>
+    <p>
+        dispatcher = createUnoService("com.sun.star.frame.DispatchHelper") dispatcher.executeDispatch(document,
+        ".uno:SelectAll", "", 0, Array()) dispatcher.executeDispatch(document, ".uno:Copy", "", 0, Array()) End Sub
+    </p>
+</blockquote>
+<p>
+    The API is more stable than the dispatches and works where a dispatch may fail. Another example where the API may be
+    required is when the macro is invoked from OpenOffice started in headless mode; a topic not otherwise discussed in
+    this document. Listing 249. Select all and copy using the API.
+</p>
+<blockquote>
+    <p>
+        Sub CopyToClipboard_API() Dim o ' Transferable content.
+    </p>
+    <p>
+        Dim oClip ' Clipboard service.
+    </p>
+    <p>
+        Dim oContents
+    </p>
+    <p>
+        Dim sClipName As String
+    </p>
+    <p>
+        ThisComponent.CurrentController.Select(ThisComponent.Text) o = ThisComponent.CurrentController.getTransferable()
+    </p>
+    <p>
+        sClipName = "com.sun.star.datatransfer.clipboard.SystemClipboard" oClip = createUnoService(sClipName) oContents
+        = oClip.setContents(o, null) End Sub
+    </p>
+</blockquote>
+<h2 id="conclusion">
+    11.4. Conclusion
+</h2>
+<p>
+    The dispatch commands are powerful and require little knowledge of the internal workings of OOo. Although some
+    functionality, such as the Undo command, can only be used in the dispatcher, macros that will be used for a long
+    time are better off using the internal objects directly.
+</p>
+<aside id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+    <hr />
+    <ol>
+        <li id="fn1">
+            <p>
+                I have not verified that a named frame does not work in OOo 3.3, but it did fail when I tested around
+                version 2.0.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a>
+            </p>
+        </li>
+    </ol>
+</aside>
