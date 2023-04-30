@@ -1,0 +1,2408 @@
+<p>
+    12. StarDesktop
+</p>
+<p>
+    The desktop acts as the main application that controls OpenOffice.org. This chapter introduces general techniques —
+    such as accessing indexed objects, enumerating open documents, and loading new documents — while discussing and
+    demonstrating the base functionality of the Desktop object. This chapter also covers the Desktop object and
+    ThisComponent.
+</p>
+<p>
+    The Desktop object is a com.sun.star.frame.Desktop service, which supplies four primary functions:
+</p>
+<ol type="1">
+    <li>
+        StarDesktop acts as a frame. The desktop is the parent frame and controls the frames for all of the documents.
+    </li>
+    <li>
+        StarDesktop acts as a desktop. The desktop is the main application with the ability to close the documents —
+        when the application is shut down, for example.
+    </li>
+    <li>
+        StarDesktop acts as a document loader. The role of the main application also allows the desktop to load existing
+        documents and create new documents.
+    </li>
+    <li>
+        StarDesktop acts as an event broadcaster. The desktop notifies existing documents (or any other listener) of
+        things that are happening — when the application is about to shut down, for example.
+    </li>
+</ol>
+<p>
+    The Desktop, acting as the primary application object, is created when OOo is started. Use the globally available
+    variable StarDesktop to access the OOo Desktop object.
+</p>
+<h1 id="the-frame-service">
+    12.1. The Frame service
+</h1>
+<p>
+    The desktop is a com.sun.star.frame.Frame service (remember that an object can, and usually does, implement more
+    than one service at a time). For a document, the primary purpose of a frame is to act as a liaison between the
+    document and the visible window. For the desktop, however, the primary purpose is to act as the root frame, which
+    contains all other frames. A frame can hold a component and zero or more subframes — for simplicity, consider a
+    component to be a document. In the case of the desktop, all the other frames are subframes of the root frame, and
+    the component (document) is a set of data. Simply stated, each document contains a frame that it uses to interact
+    with the visible window, but the desktop is a frame so that it can contain, control, and access all of the
+    document’s frames.
+</p>
+<p>
+    The service com.sun.star.frame.Frame — Frame for short — provides numerous interesting capabilities that are not
+    generally useful as part of the Desktop object. For example, the Title and the StatusIndicator defined as part of
+    the Frame service are of no use for the Desktop object because the Desktop object does not have a displayed window.
+    These properties are meaningful only in a frame that contains a display window. The desktop is a frame so that it
+    can act as the root frame for all the other frames.
+</p>
+<blockquote>
+    <p>
+        TIP Although it is possible to use the desktop as a Frame service to enumerate the contained frames, the
+        XDesktop interface is generally more useful to enumerate the documents rather than the frames. I usually access
+        frames to obtain window titles.
+    </p>
+</blockquote>
+<p>
+    Use the getActiveFrame() method of the desktop to obtain the active frame (see Listing 250). The active frame is the
+    frame that contains the current focus. If the currently focused window is not an OOo window, getActiveFrame returns
+    the last OOo frame that had the focus. Listing 250. Print the title of the current frame.
+</p>
+<p>
+    Print StarDesktop.getActiveFrame().Title
+</p>
+<p>
+    Use the getFrames() method to enumerate or search all of the frames contained in the desktop. The getFrames() method
+    returns an object that implements the com.sun.star.frame.XFrames interface. A frame can contain other frames; the
+    XFrames interface provides access to the contained frames.
+</p>
+<blockquote>
+    <p>
+        TIP Use the full interface name to find the Web address for the API information on the XFrames interface. It is
+        important that you learn to find the Web pages on the API site from the full service or interface name.
+    </p>
+</blockquote>
+<h2 id="the-xindexaccess-interface">
+    12.1.1. The XIndexAccess interface
+</h2>
+<p>
+    The XFrames interface is derived from the com.sun.star.container.XIndexAccess interface. As its name implies, this
+    interface allows access to the contained frames using a numeric index. Numerous other interfaces also derive from
+    the XIndexAccess interface, allowing a simple numeric index to access the contained elements. See Listing 251 and
+    Figure 80. The sheets object in a Calc document allows you to access each sheet based on the index, or the name.
+</p>
+<p>
+    TIP Learn how to use the XIndexAccess interface because OOo uses this service in numerous other places.
+</p>
+<p>
+    Listing 251. Display frame titles of open components.
+</p>
+<p>
+    Sub DisplayFrameTitles
+</p>
+<p>
+    Dim vFrames As Variant 'All of the frames
+</p>
+<p>
+    Dim vFrame As Variant 'A single frame
+</p>
+<p>
+    Dim i As Integer 'Index to enumerate the frames Dim s As String 'Contains the string to print
+</p>
+<p>
+</p>
+<p>
+    vFrames = StarDesktop.getFrames() 'Get all of the frames
+</p>
+<p>
+</p>
+<p>
+    REM getCount() returns the number of contained frames
+</p>
+<p>
+    REM If there are four frames, then i has the values 1, 2, 3, and 4
+</p>
+<p>
+    REM the getByIndex(i) method, however, is zero based. This means
+</p>
+<p>
+    REM that it requires the values 0, 1, 2, and 3 For i = 1 To vFrames.getCount() vFrame = vFrames.getByIndex(i-1)
+</p>
+<p>
+    s = s &amp; CStr(i-1) &amp; " : " &amp; vFrame.Title &amp; CHR$(10)
+</p>
+<p>
+    Next
+</p>
+<p>
+    MsgBox s, 0, "Frame Titles"
+</p>
+<p>
+    End Sub
+</p>
+<blockquote>
+    <p>
+        <img src="media/image1.png" style="width:4.20333in;height:1.32333in" />
+    </p>
+</blockquote>
+<p>
+    Figure 80. Titles of top-level frames.
+</p>
+<h2 id="find-frames-with-framesearchflag-constants">
+    12.1.2. Find frames with FrameSearchFlag constants
+</h2>
+<p>
+    Use the com.sun.star.frame.FrameSearchFlag constants to search the OOo frames (see Table 95).
+</p>
+<p>
+    FrameSearchFlag constants are used to create an enumerated list of frames from the queryFrames() method defined in
+    the XFrames interface. The FrameSearchFlag constants are also used to find a frame when loading a document and
+    specifying which frames will receive a dispatch. In other words, you will see the FrameSearchFlag constants again.
+</p>
+<p>
+    Table 95. com.sun.star.frame.FrameSearchFlag constants.
+</p>
+<table border="1">
+    <tbody>
+        <tr class="odd">
+            <td>
+                #
+            </td>
+            <td>
+                Name
+            </td>
+            <td>
+                Description
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                0
+            </td>
+            <td>
+                AUTO
+            </td>
+            <td>
+                Deprecated. Use 6 = SELF+CHILDREN.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                1
+            </td>
+            <td>
+                PARENT
+            </td>
+            <td>
+                Include the parent frame.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                2
+            </td>
+            <td>
+                SELF
+            </td>
+            <td>
+                Include this frame.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                4
+            </td>
+            <td>
+                CHILDREN
+            </td>
+            <td>
+                Include the child frames of this frame.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                8
+            </td>
+            <td>
+                CREATE
+            </td>
+            <td>
+                Create a frame if the requested frame is not found.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                16
+            </td>
+            <td>
+                SIBLINGS
+            </td>
+            <td>
+                Include the child frames of the parent of this frame.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                32
+            </td>
+            <td>
+                TASKS
+            </td>
+            <td>
+                Include all frames in all tasks in the current frames hierarchy.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                23
+            </td>
+            <td>
+                ALL
+            </td>
+            <td>
+                Include all frames except TASKS frames. 23 = 1+2+4+16 = PARENT + SELF + CHILDREN + SIBLINGS.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                55
+            </td>
+            <td>
+                GLOBAL
+            </td>
+            <td>
+                Include every frame. 55 = 1+2+4+16+32 = PARENT + SELF + CHILDREN + SIBLINGS + TASKS.
+            </td>
+        </tr>
+    </tbody>
+</table>
+<p>
+    The values in Table 95 are enumerated constants. OOo has enumerated values for many different purposes. You can
+    access all enumerated values in OOo Basic in a similar fashion. Each constant has an assigned name, as seen in the
+    Name column in Table 95. You can use this name by preceding it with
+</p>
+<p>
+    com.sun.star.frame.FrameSearchFlag. For example, use com.sun.star.frame.FrameSearchFlag.TASKS to use the TASKS
+    constant (see Listing 252). The name of a constant provides meaningful information while reading the Basic code.
+    Using the constant values directly, although allowed, obfuscates your code — in other words, causes it to be less
+    readable.
+</p>
+<blockquote>
+    <p>
+        TIP Constant names are case sensitive the first time that they are used. If the two lines in Listing 252 are
+        switched, then a run-time error occurs because the version with the wrong case is found first.
+    </p>
+</blockquote>
+<p>
+    Listing 252. Constant names are not case sensitive the second time they are used.
+</p>
+<p>
+    Print com.sun.star.frame.FrameSearchFlag.TASKS '32
+</p>
+<p>
+    Print COM.SUN.STAR.frame.FrameSearchFLAG.tasKS '32 – Works because it is already known. The values in Table 95 are
+    flags that may be combined. For example, the values for ALL and GLOBAL exist only as a convenience; they are a
+    combination of the other flags as shown in Table 95. You can create your own values if a suitable combination is not
+    provided. For example, to search ALL and to create a frame if it is not found, use the value 31 = 23 + 8 = ALL +
+    CREATE.
+</p>
+<blockquote>
+    <p>
+        TIP Frame search flags are bit-flags that can be combined by using the OR operator. If you do not know what a
+        bit-flag is, just smile and nod.
+    </p>
+</blockquote>
+<p>
+    The code in Listing 253 uses the FrameSearchFlag constants to search the frames that are children of the Desktop
+    object. The output from Listing 253 duplicates the output from Listing 251 by obtaining a list of all child frames
+    from the Desktop object. Note that the return type from the queryFrames() method is an array. I know this because I
+    looked at the API Web site. Although you can inspect the returned object to see what it is, it isn’t possible to
+    determine the values of the arguments to the queryFrames() method by inspection alone. Listing 253. Query frames to
+    get frame titles.
+</p>
+<p>
+    Sub QueryFrames
+</p>
+<p>
+    Dim vFrames As Variant 'All of the frames
+</p>
+<p>
+    Dim vFrame As Variant 'A single frame
+</p>
+<p>
+    Dim i As Integer 'Index to enumerate the frames
+</p>
+<p>
+    Dim s As String 'Contains the string to print REM Call the queryFrames() method on the XFrames interface.
+</p>
+<p>
+    REM This takes one argument, a FrameSearchFlag.
+</p>
+<p>
+    REM This searches the children of the desktop. vFrames = StarDesktop.getFrames().queryFrames(_
+</p>
+<p>
+    com.sun.star.frame.FrameSearchFlag.CHILDREN)
+</p>
+<p>
+</p>
+<p>
+    For i = LBound(vFrames) To UBound(vFrames) ' The return value is an array. s = s &amp; vFrames(i).Title &amp;
+    CHR$(10) ' Append the title and a new line.
+</p>
+<p>
+    Next
+</p>
+<p>
+    MsgBox s, 0, "Frame Titles" ' Display the titles.
+</p>
+<p>
+    End Sub
+</p>
+<blockquote>
+    <p>
+        TIP In OOo 3.3.0, I noticed that the frame title differs for the help window when enumerated using a query. I
+        have not pursued exactly why.
+    </p>
+</blockquote>
+<h1 id="the-xeventbroadcaster-interface">
+    12.2. The XEventBroadcaster interface
+</h1>
+<p>
+    When certain important events occur in OOo, the event is broadcast to all the objects that register as listeners for
+    a specific event — for example, to be notified before a document is closed. The
+    com.sun.star.document.XEventBroadcaster interface allows the desktop to act as a broadcaster.
+</p>
+<p>
+    The XEventBroadcaster interface defines the methods addEventListener() and removeEventListener() to add and remove
+    event listeners. These two methods are not usually used directly because methods that are specific to the listener
+    are typically used. For example, the Controller object contains the methods addKeyHandler() and removeKeyHandler()
+    to add and remove listeners for key-press events.
+</p>
+<h1 id="the-xdesktop-interface">
+    12.3. The XDesktop interface
+</h1>
+<p>
+    The com.sun.star.frame.XDesktop interface defines the primary functionality of the Desktop service. The desktop
+    contains the top-level components that can be viewed in a frame. In other words, it contains and controls the life
+    cycle of the OpenOffice.org documents, help window, Basic IDE, and the other component types.
+</p>
+<p>
+    The desktop is a Frame service so that it can act as the root frame containing all the other frames. The desktop,
+    therefore, has access to and controls all the other frames. This control includes the ability to load documents and
+    the ability to close all frames and exit OOo.
+</p>
+<h2 id="closing-the-desktop-and-contained-components">
+    12.3.1. Closing the desktop and contained components
+</h2>
+<p>
+    To close the desktop and all the contained frames, call the terminate() method. This method is not guaranteed to
+    close the desktop; it is merely a suggestion (or request) that you would like OOo to close. Before closing, the
+    desktop asks every object that asked to be notified before closing if it is OK to close. If any listener says no,
+    then OOo will not terminate. Every open document registers as a terminate listener and asks you if you want to save
+    a document if it has not yet been saved; in case you wondered how that works.
+</p>
+<p>
+    All the OOo document types support the com.sun.star.util.XCloseable interface. The XCloseable interface defines the
+    method “close(bForce As Boolean)”. If bForce is False, the object may refuse to close. If bForce is True, the object
+    is not able to refuse.
+</p>
+<p>
+    According to Mathias Bauer, one of the lead developers, the Desktop object does not support the XCloseable interface
+    for legacy reasons. The terminate() method was used before it was determined to be inadequate for closing documents
+    or windows. If the terminate() method was not already implemented, then the desktop would also support the
+    XCloseable interface.
+</p>
+<p>
+    The code in Listing 254 demonstrates the safe way to close a document using any version of OOo. If you know that
+    your code will run on OOo 1.1 or later, you can simply use the close() method. Listing 254. The safe way to close a
+    document using any version of OOo.
+</p>
+<p>
+    If HasUnoInterfaces(oDoc, "com.sun.star.util.XCloseable") Then oDoc.close(true) Else
+</p>
+<p>
+    oDoc.dispose() End If
+</p>
+<p>
+    The code in Listing 254 assumes that the variable oDoc references an OOo document. Some component types do not
+    support the XCloseable interface. One example is the Basic IDE. The desktop contains methods to enumerate the
+    currently open components and to access the current component. These methods are discussed shortly.
+</p>
+<p>
+    The dispose() method automatically discards a document even if it is modified, while the close() method does not.
+    Use setModified(False) to mark a modified document as not modified, thereby preventing the close() method from
+    complaining that you are closing a modified document.
+</p>
+<h2 id="enumerating-components-using-xenumerationaccess">
+    12.3.2. Enumerating components using XEnumerationAccess
+</h2>
+<p>
+    Usually, a component refers to an OOo document, but it may refer to other things, such as the Basic IDE or the
+    included help pages. Use the getComponents() method defined in the XDesktop interface to return an enumeration of
+    the components controlled by the desktop. The returned object supports the interface
+    com.sun.star.container.XEnumerationAccess.
+</p>
+<blockquote>
+    <p>
+        TIP OOo has many interfaces for returning a list of objects — some methods return an array of objects. In the
+        desktop, XIndexAccess is used to enumerate frames and the XEnumerationAccess interface is used to enumerate
+        components.
+    </p>
+</blockquote>
+<p>
+    A component that is also an OOo document supports the XModel interface. The model represents the underlying document
+    data, so if a component doesn’t support the XModel interface, it isn’t an OOo document. In other words, supporting
+    the XModel interface implies that a component has data; if it doesn’t have data, then it isn’t a document. Use the
+    HasUnoInterfaces function to check each component to see if it is an OOo document. To find a specific document,
+    search all of the components and check the URL or some other distinguishing characteristic.
+</p>
+<p>
+    It is possible that a document does not have a URL, in this case, the returned URL is an empty string. The
+    subroutine FileNameOutOfPath fails with an empty string; so EnumerateComponentNames checks for this case. Listing
+    255. Demonstrate how to enumerate components.
+</p>
+<p>
+    Sub EnumerateComponentNames
+</p>
+<p>
+    Dim vComps 'Enumeration access object
+</p>
+<p>
+    Dim vEnumerate 'Enumeration object
+</p>
+<p>
+    Dim vComp 'Single component
+</p>
+<p>
+    Dim s As String 'Display string
+</p>
+<p>
+    Dim sURL As String 'Document URL
+</p>
+<p>
+</p>
+<p>
+    REM Load the Tools library because Strings module contains
+</p>
+<p>
+    REM the function FileNameOutOfPath()
+</p>
+<p>
+    GlobalScope.BasicLibraries.LoadLibrary("Tools")
+</p>
+<p>
+</p>
+<p>
+    vComps=StarDesktop.getComponents()'com.sun.star.container.XEnumerationAccess
+</p>
+<p>
+    If NOT vComps.hasElements() Then 'I do not have to do this, but Print "There are no components" 'this demonstrates
+    that I can
+</p>
+<p>
+    Exit Sub
+</p>
+<p>
+    End If
+</p>
+<p>
+    vEnumerate = vComps.createEnumeration() 'com.sun.star.container.XEnumeration Do While vEnumerate.hasMoreElements()
+    'Are there any elements to retrieve? vComp = vEnumerate.nextElement() 'Get next element
+</p>
+<p>
+    REM Only try to get the URL from document components
+</p>
+<p>
+    REM This will skip the IDE, for example
+</p>
+<p>
+    If HasUnoInterfaces(vComp, "com.sun.star.frame.XModel") Then sURL = vComp.getURL() If sURL = "" Then
+</p>
+<p>
+    s = s &amp; "&lt;Component With No URL&gt;" &amp; CHR$(10) Else
+</p>
+<p>
+    s = s &amp; FileNameOutOfPath(sURL) &amp; CHR$(10)
+</p>
+<p>
+    End If
+</p>
+<p>
+    End If
+</p>
+<p>
+    Loop
+</p>
+<p>
+    MsgBox s, 0, "Document Names" End Sub
+</p>
+<p>
+    Figure 81, produced by Listing 6, lists the file names of all currently open documents.
+</p>
+<blockquote>
+    <p>
+        <img src="media/image2.png" style="width:3.40333in;height:1.12667in" />
+    </p>
+</blockquote>
+<p>
+    Figure 81. File names of currently open documents.
+</p>
+<h2 id="current-component">
+    12.3.3. Current component
+</h2>
+<p>
+    Use getCurrentComponent() to return the currently focused component, which is not necessarily an OOo document. To
+    obtain the most current document, use the globally defined variable ThisComponent. Listing 256. ThisComponent
+    references the current OOo document.
+</p>
+<p>
+    Print ThisComponent.getURL() 'Works from Basic IDE
+</p>
+<p>
+    Print StarDesktop.getCurrentComponent().getURL() 'Fails from Basic IDE
+</p>
+<blockquote>
+    <p>
+        TIP StarDesktop.getCurrentComponent() returns the currently focused component. If the Basic IDE is open, the
+        Basic IDE component is returned. Use the globally defined variable ThisComponent to return the most current
+        document.
+    </p>
+</blockquote>
+<p>
+    Most of the macros that I write are intended to modify the current document. Because of this, I frequently use
+    ThisComponent.
+</p>
+<h2 id="current-component-again">
+    12.3.4. Current component (again)
+</h2>
+<p>
+    Although StarDesktop.getCurrentComponent() can be used in many situations, it is not a reliable method to obtain the
+    document that most recently had focus. The method getCurrentComponent() returns either the component that currently
+    has focus, or the component that had the focus before control was switched to a different application. This behavior
+    causes problems when attempting to debug Basic programs, because the
+</p>
+<p>
+    Basic IDE is the current component. It is therefore preferable to use ThisComponent rather than
+</p>
+<p>
+    StarDesktop.CurrentComponent. Forcing a new document’s window to become focused does not change the value of
+    ThisComponent. The value of ThisComponent is set when the macro begins running and then it is not changed. Listing
+    257. Use one of these two methods to cause oDoc2 to become the focused document.
+</p>
+<p>
+    oDoc2.CurrentController.Frame.ContainerWindow.toFront() oDoc2.CurrentController.Frame.Activate()
+</p>
+<blockquote>
+    <p>
+        TIP When a macro is called because an event occurred, ThisComponent refers to the document that produced the
+        event unless the macro is contained in another document. Therefore, it’s better to place global macros that will
+        be called from other documents inside a global library rather than inside a document.
+    </p>
+</blockquote>
+<p>
+    Macros may be called when certain events occur (perhaps as a registered event handler). When a macro is called
+    because an event occurred, ThisComponent refers to the document that produced the event even if it isn’t the
+    currently focused document. The variable ThisComponent is available only from BASIC.
+</p>
+<blockquote>
+    <p>
+        TIP It is possible to run a macro when no document is open; for obvious reasons, the macro must reside in the
+        application library rather than in a document.
+    </p>
+</blockquote>
+<h2 id="current-frame">
+    12.3.5. Current frame
+</h2>
+<p>
+    Although the Frame service allows the desktop to enumerate the contained frames, it is the XDesktop interface that
+    defines the method getCurrentFrame(). The getCurrentFrame() method returns the frame of the currently focused
+    component.
+</p>
+<p>
+    TIP The component contained in the current frame may, or may not, be an OOo document.
+</p>
+<p>
+    The code in Listing 258 shows one of many things you can do with the current frame. The macro obtains the current
+    frame, the frame returns the current window, and then the macro reduces the size of the current window.
+</p>
+<p>
+    Listing 258. Shrink the size of the current window by 25%
+</p>
+<p>
+    REM Shrink the current window to 75% of its current size.
+</p>
+<p>
+    Sub ShrinkWindowBy75
+</p>
+<p>
+    Dim vFrame 'Current frame
+</p>
+<p>
+    Dim vWindow 'container window
+</p>
+<p>
+</p>
+<p>
+    REM And this is a struct that holds a rectangle object REM I could have also used a Variant or an Object to REM hold
+    the return type, but I know what it is, so I
+</p>
+<p>
+    REM defined the correct type to hold it.
+</p>
+<p>
+    Dim vRect As New com.sun.star.awt.Rectangle
+</p>
+<p>
+</p>
+<p>
+    vFrame = StarDesktop.getCurrentFrame() vWindow = vFrame.getContainerWindow()
+</p>
+<p>
+</p>
+<p>
+    REM As a struct, the object is copied by value, not by reference. REM This means that I can modify vRect and it will
+    not affect
+</p>
+<p>
+    REM the position and size of the window.
+</p>
+<p>
+    REM In my tests, vRect.X and vRect.Y are zero, which is wrong.
+</p>
+<p>
+    REM vRect.Width and vRect.Height are indeed correct. vRect = vWindow.getPosSize()
+</p>
+<p>
+</p>
+<p>
+    REM When setting the position and size, the last argument specifies
+</p>
+<p>
+    REM which of the arguments to use.
+</p>
+<p>
+    'com.sun.star.awt.PosSize.X Set only the X-position
+</p>
+<p>
+    'com.sun.star.awt.PosSize.Y Set only the Y-position
+</p>
+<p>
+    'com.sun.star.awt.PosSize.WIDTH Set only the Width
+</p>
+<p>
+    'com.sun.star.awt.PosSize.HEIGHT Set only the Height
+</p>
+<p>
+    'com.sun.star.awt.PosSize.POS Set only the Position
+</p>
+<p>
+    'com.sun.star.awt.PosSize.SIZE Set only the Size
+</p>
+<p>
+    'com.sun.star.awt.PosSize.POSSIZE Set both the Position and Size vWindow.setPosSize( vRect.X, vRect.Y,
+    3*vRect.Width/4, 3*vRect.Height/4,_ com.sun.star.awt.PosSize.SIZE ) End Sub
+</p>
+<h1 id="load-a-document">
+    12.4. Load a document
+</h1>
+<p>
+    The desktop implements the com.sun.star.frame.XComponentLoader interface. This is a simple interface to load
+    components from a URL. Use the method LoadComponentFromUrl() defined in the XComponentLoader interface to load an
+    existing document or create a new one.
+</p>
+<p>
+    com.sun.star.lang.XComponent loadComponentFromUrl(
+</p>
+<p>
+    String aURL,
+</p>
+<p>
+    String aTargetFrameName,
+</p>
+<p>
+    Long nSearchFlags,
+</p>
+<p>
+    sequence&lt; com::sun::star::beans::PropertyValue &gt; aArgs)
+</p>
+<p>
+    The first argument to the method LoadComponentFromUrl() specifies the URL of the document to load. To load an
+    existing document, provide the URL of the document. Use the function ConvertToURL to convert a file name expressed
+    in an operating-system-specific format to a URL.
+</p>
+<p>
+    Print ConvertToURL("c:\temp\file.txt") 'file:///c:/temp/file.txt
+</p>
+<p>
+    The URL may indicate a local file, or even a file on the Internet (see Listing 259). I recommend obtaining a
+    high-speed Internet connection before running this macro because it loads a 500-page document. Also, do not run this
+    macro unless you have OOo 3.4 or later, because when you close AndrewMacro, it will cause OOo to crash. Listing 259.
+    Load document over HTTP.
+</p>
+<p>
+    Sub LoadMacroDocFromHttp
+</p>
+<p>
+    Dim noArgs() 'An empty array for the arguments.
+</p>
+<p>
+    Dim vComp 'The loaded component Dim sURL As String 'URL of the document to load sURL =
+    "http://www.pitonyak.org/AndrewMacro.odt"
+</p>
+<p>
+    vComp = StarDesktop.LoadComponentFromUrl(sURL, "_blank", 0, noArgs()) End Sub
+</p>
+<p>
+    OOo uses special URLs to indicate that a new document, rather than an existing document, should be created.
+</p>
+<p>
+    Table 96. URLs for creating new documents.
+</p>
+<table border="1">
+    <tbody>
+        <tr class="odd">
+            <td>
+                URL
+            </td>
+            <td>
+                Document Type
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                "private:factory/scalc"
+            </td>
+            <td>
+                Calc document
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                "private:factory/swriter"
+            </td>
+            <td>
+                Writer document
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                "private:factory/swriter/web"
+            </td>
+            <td>
+                Writer HTML Web document
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                "private:factory/swriter/GlobalDocument"
+            </td>
+            <td>
+                Master document
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                "private:factory/sdraw"
+            </td>
+            <td>
+                Draw document
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                "private:factory/smath"
+            </td>
+            <td>
+                Math formula document
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                "private:factory/simpress"
+            </td>
+            <td>
+                Impress presentation document
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                "private:factory/schart"
+            </td>
+            <td>
+                Chart
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                ".component:Bibliography/View1"
+            </td>
+            <td>
+                Bibliography — Edit the bibliography entries
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                <p>
+                    ".component:DB/QueryDesign"
+                </p>
+                <p>
+                    ".component:DB/TableDesign"
+                </p>
+                <p>
+                    ".component:DB/RelationDesign"
+                </p>
+                <p>
+                    ".component:DB/DataSourceBrowser"
+                </p>
+                <p>
+                    ".component:DB/FormGridView"
+                </p>
+            </td>
+            <td>
+                Database components
+            </td>
+        </tr>
+    </tbody>
+</table>
+<p>
+    The macro in Listing 260 opens five new documents — each in a new window. When I last ran this in OOo 3.3, OOo
+    seemed a bit confused as to which document should have focus. Listing 260. Create new documents.
+</p>
+<p>
+    Sub LoadEmptyDocuments
+</p>
+<p>
+    Dim noArgs() 'An empty array for the arguments
+</p>
+<p>
+    Dim vComp 'The loaded component
+</p>
+<p>
+    Dim sURLs() 'URLs of the new document types to load
+</p>
+<p>
+    Dim sURL As String 'URL of the document to load Dim i As Integer
+</p>
+<p>
+    sURLs = Array("scalc", "swriter", "sdraw", "smath", "simpress")
+</p>
+<p>
+    For i = LBound(sURLs) To UBound(sURLs) sURL = "private:factory/" &amp; sURLs(i)
+</p>
+<p>
+    vComp = StarDesktop.LoadComponentFromUrl(sURL, "_blank", 0, noArgs()) Next
+</p>
+<p>
+    End Sub
+</p>
+<p>
+    TIP You can also load a document from a frame.
+</p>
+<p>
+    When a component (document) is loaded, it is placed into a frame; the second argument to
+</p>
+<p>
+    LoadComponentFromUrl() specifies the name of the frame. If a frame with the specified name already exists, the newly
+    loaded document uses the existing frame. The code in Listing 260 demonstrates the special frame name “_blank” — the
+    special frame names are discussed shortly. Frame names that are not “special,” specify the name of an existing frame
+    or a new frame. If you specify a frame name, you must tell OOo how to find the frame. The values in Table 95
+    enumerate valid values for the frame search flags. It used to be possible to specify the name of the frame that will
+    contain a document (but this has not worked since OOo 1.1.0). Here are a few items to note:
+</p>
+<ol type="1">
+    <li>
+        When a document is loaded, the frame name becomes something like “Untitled 1 – OpenOffice.org Writer” rather
+        than the specified name.
+    </li>
+    <li>
+        If you specify the frame name, the document will fail to load if a frame with that name does not exist. If the
+        frame does exist, it will load it into a new frame.
+    </li>
+</ol>
+<p>
+    If you experiment with this, be certain to save your documents before running the macro, at least one experiment
+    caused the new document to load into the current frame. Listing 261. Open a document into an existing frame.
+</p>
+<p>
+    Sub UseAnExistingFrame
+</p>
+<p>
+    Dim noArgs() 'An empty array for the arguments
+</p>
+<p>
+    Dim vDoc 'The loaded component
+</p>
+<p>
+    Dim sURL As String 'URL of the document to load
+</p>
+<p>
+    Dim nSearch As Long 'Search flags
+</p>
+<p>
+    Dim sFName As String 'Frame Name
+</p>
+<p>
+    Dim vFrame 'Document Frame
+</p>
+<p>
+    Dim s As String 'Display string
+</p>
+<p>
+</p>
+<p>
+    REM Search globally for this
+</p>
+<p>
+    nSearch = com.sun.star.frame.FrameSearchFlag.GLOBAL + _ com.sun.star.frame.FrameSearchFlag.CREATE
+</p>
+<p>
+</p>
+<p>
+    REM I can even open a real file for this, but I don't know what files REM you have on your computer so I create a
+    new Writer document instead sURL = "file:///andrew0/home/andy/doc1.odt" sURL = "private:factory/swriter"
+</p>
+<p>
+</p>
+<p>
+    REM Create a frame with the name MyFrame rather than _default sFName = "MyFrame"
+</p>
+<p>
+    vFrame = ThisComponent.CurrentController.Frame
+</p>
+<p>
+    vDoc = vFrame.LoadComponentFromUrl(sURL, sFName, nSearch, noArgs())
+</p>
+<p>
+    If IsNull(vDoc) Then
+</p>
+<p>
+    Print "Failed to create a document"
+</p>
+<p>
+    Exit Sub
+</p>
+<p>
+    End If
+</p>
+<p>
+</p>
+<p>
+    REM The name of the frame is MyFrame. Note that the name has nothing
+</p>
+<p>
+    REM to do with the title! sFName = vDoc.CurrentController.Frame.Name
+</p>
+<p>
+    s = "Created document to frame " &amp; sFName &amp; CHR$(10)
+</p>
+<p>
+    MsgBox s
+</p>
+<p>
+</p>
+<p>
+    REM This time, do not allow creation; only allow an existing frame nSearch =
+    com.sun.star.frame.FrameSearchFlag.Global sURL = "file:///andrew0/home/andy/doc2.odt" sURL = "private:factory/scalc"
+</p>
+<p>
+    'sFName = "doc1 – OpenOffice.org Writer"
+</p>
+<p>
+    vDoc = vFrame.LoadComponentFromUrl(sURL, sFName, nSearch, noArgs())
+</p>
+<p>
+    If IsNull(vDoc) Then
+</p>
+<p>
+    Print "Failed to create a document"
+</p>
+<p>
+    Exit Sub
+</p>
+<p>
+    End If
+</p>
+<p>
+    s = s &amp; "Created document to frame " &amp; sFName
+</p>
+<p>
+    MsgBox s
+</p>
+<p>
+    End Sub
+</p>
+<p>
+    OOo uses special frame names to specify special behavior (see Table 97). Use these special frame names to cause the
+    specified behavior. Table 97. Special frame names.
+</p>
+<table border="1">
+    <tbody>
+        <tr class="odd">
+            <td>
+                Frame Name
+            </td>
+            <td>
+                Description
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                "_blank"
+            </td>
+            <td>
+                Creates a new frame.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                "_default"
+            </td>
+            <td>
+                Detects an already loaded document or creates a new frame if it is not found.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                "_self"
+            </td>
+            <td>
+                Use or return this frame.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                ""
+            </td>
+            <td>
+                Use or return this frame.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                "_parent"
+            </td>
+            <td>
+                Use or return the direct parent of this frame.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                "_top"
+            </td>
+            <td>
+                Use or return the highest level parent frame.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                "_beamer"
+            </td>
+            <td>
+                Use or return a special subframe.
+            </td>
+        </tr>
+    </tbody>
+</table>
+<p>
+    Although you cannot currently cause OOo to find a frame and use it, you can search for the frame with the desired
+    name and then use that frame to load a document into that frame; by using the frame name “_self”. Listing 262.
+    ReuseAFrame
+</p>
+<p>
+    Sub UseFrameSelf
+</p>
+<p>
+    Dim noArgs() 'An empty array for the arguments
+</p>
+<p>
+    Dim vDoc 'The loaded component
+</p>
+<p>
+    Dim sURL As String 'URL of the document to load
+</p>
+<p>
+    Dim nSearch As Long 'Search flags
+</p>
+<p>
+    Dim sFName As String 'Frame Name
+</p>
+<p>
+    Dim vFrame 'Document Frame
+</p>
+<p>
+    Dim s As String 'Display string
+</p>
+<p>
+</p>
+<p>
+    REM Search globally for this
+</p>
+<p>
+    nSearch = com.sun.star.frame.FrameSearchFlag.GLOBAL + _ com.sun.star.frame.FrameSearchFlag.CREATE
+</p>
+<p>
+</p>
+<p>
+    REM I can even open a real file for this, but I don't know what files REM you have on your computer so I create a
+    new Writer document instead sURL = "file:///andrew0/home/andy/doc1.odt" sURL = "private:factory/swriter"
+</p>
+<p>
+</p>
+<p>
+    REM Create a frame with the name MyFrame rather than _default sFName = "MyFrame"
+</p>
+<p>
+    vFrame = ThisComponent.CurrentController.Frame
+</p>
+<p>
+    vDoc = vFrame.LoadComponentFromUrl(sURL, sFName, nSearch, noArgs())
+</p>
+<p>
+    If IsNull(vDoc) Then
+</p>
+<p>
+    Print "Failed to create a document"
+</p>
+<p>
+    Exit Sub
+</p>
+<p>
+    End If
+</p>
+<p>
+</p>
+<p>
+    REM The name of the frame is MyFrame. Note that the name has nothing
+</p>
+<p>
+    REM to do with the title! sFName = vDoc.CurrentController.Frame.Name
+</p>
+<p>
+    s = "Created document to frame " &amp; sFName &amp; CHR$(10)
+</p>
+<p>
+    MsgBox s
+</p>
+<p>
+</p>
+<p>
+    REM This time, do not allow creation; only allow an existing frame sURL = "file:///andrew0/home/andy/doc2.odt" sURL
+    = "private:factory/scalc" sFName = "_self"
+</p>
+<p>
+    ' Get a document's frame from the document's current controller. vDoc =
+    vDoc.CurrentController.Frame.LoadComponentFromUrl(sURL, sFName, nSearch, noArgs())
+</p>
+<p>
+    If IsNull(vDoc) Then
+</p>
+<p>
+    Print "Failed to create a document"
+</p>
+<p>
+    Exit Sub
+</p>
+<p>
+    End If
+</p>
+<p>
+    s = s &amp; "Created document to frame " &amp; sFName
+</p>
+<p>
+    MsgBox s
+</p>
+<p>
+    End Sub
+</p>
+<h2 id="named-arguments">
+    12.4.1. Named arguments
+</h2>
+<p>
+    The final argument to the LoadComponentFromUrl() method is an array of structures of type
+    com.sun.star.beans.PropertyValue. Each property value consists of a name and a value. The properties are used to
+    pass named arguments that direct OOo when it loads the document. Table 98 contains a brief description of the
+    supported named arguments.
+</p>
+<blockquote>
+    <p>
+        TIP Table 98 contains only named arguments that are not deprecated. The API Web site on the
+        com.sun.star.document.MediaDescriptor service contains a complete list of named arguments, deprecated and
+        otherwise. Some properties are not shown, such as Aborted, because they are set while loading; for example,
+        Aborted, which is set if an incorrect password is used.
+    </p>
+</blockquote>
+<p>
+    Table 98. Valid named arguments for loading and storing documents.
+</p>
+<table border="1">
+    <tbody>
+        <tr class="odd">
+            <td>
+                Argument
+            </td>
+            <td>
+                Description
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                AsTemplate
+            </td>
+            <td>
+                <p>
+                    A value of True creates a new untitled document, even if the document is not a template.
+                </p>
+                <p>
+                    The default loads the template document for editing.
+                </p>
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                Author
+            </td>
+            <td>
+                Sets the current author if the component can track the author of the current version when the document
+                is saved.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                CharacterSet
+            </td>
+            <td>
+                Identifies the character set for single-byte characters.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                Comment
+            </td>
+            <td>
+                Similar to the Author argument, but sets the document description for version control.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                ComponentData
+            </td>
+            <td>
+                Allows component-specific properties.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                DocumentTitle
+            </td>
+            <td>
+                Sets the Document title.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                FilterData
+            </td>
+            <td>
+                Additional properties for a filter if it is required.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                FilterName
+            </td>
+            <td>
+                Name of the filter for loading or storing the component when not using OOo types.
+            </td>
+        </tr>
+    </tbody>
+</table>
+<table border="1">
+    <tbody>
+        <tr class="odd">
+            <td>
+                Argument
+            </td>
+            <td>
+                Description
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                FilterOptions
+            </td>
+            <td>
+                Additional properties for a filter if it is required. These values must be strings and must be supported
+                by the filter. Use FilterData for non-string options.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                Frame
+            </td>
+            <td>
+                Specify the frame containing the document.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                Hidden
+            </td>
+            <td>
+                A value of False loads the document so that it is hidden. Do not do this if you intend to make the
+                document visible after it is loaded.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                HierarchicalDocument Name
+            </td>
+            <td>
+                The hierarchical path to the embedded document from topmost container; for example, Base forms are
+                stored in the Base document.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                InputStream
+            </td>
+            <td>
+                You can specify an existing input stream for loading a document — for example, if you have the document
+                in memory and don’t want to write it to disk first.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                InteractionHandler
+            </td>
+            <td>
+                Passes an interaction handler to handle errors and obtains a password if required.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                JumpMark
+            </td>
+            <td>
+                Jumps to a marked position after loading the component. A similar thing can be accomplished by appending
+                a '#' and the jump mark name in the URL used to open the document; the syntax with a '#' is not
+                specified in most URL schemas.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                MacroExecutionMode
+            </td>
+            <td>
+                The numeric value specifies if macros are executed when the document is loaded (see Table 99).
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                MediaType
+            </td>
+            <td>
+                Specifies the MIME type of the data that will be loaded.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                OpenNewView
+            </td>
+            <td>
+                A value of True forces the component to create a new window even if the document is already loaded. Some
+                components support multiple views for the same data. If the opened component does not support multiple
+                views, a new window is opened. It is not a view, but merely the document loaded one more time.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                OutputStream
+            </td>
+            <td>
+                If used when storing a document (not for reading), the stream must be used to write the data. If a
+                stream is not provided, the loader will create a stream by itself using the other properties.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                Overwrite
+            </td>
+            <td>
+                A value of True overwrites any existing file with the same name while saving.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                Password
+            </td>
+            <td>
+                Password for loading or storing a document. If a document that requires a password is loaded and no
+                password is specified, the document is not loaded.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                PostData
+            </td>
+            <td>
+                Posts data to an HTTP address and then loads the response as a document. PostData is usually used to
+                obtain a result from a Web form on a Web site.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                Preview
+            </td>
+            <td>
+                A value of True specifies that the document is loaded for preview. OOo may make some optimizations when
+                it opens a document in preview mode.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                ReadOnly
+            </td>
+            <td>
+                Opens the document as read-only. Read-only documents are not modifiable from the user interface, but you
+                can modify them by using the OOo API (in other words, from a macro).
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                Referer
+            </td>
+            <td>
+                A URL indicating the referrer who opened this document. Without a referrer, a document that requires
+                security checks is denied. (Yes, the argument name is “Referer,” not “Referrer.”)
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                RepairPackage
+            </td>
+            <td>
+                OOo documents are stored in a compressed zipped format. A value of True attempts to recover information
+                from a damaged ZIP file.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                StartPresentation
+            </td>
+            <td>
+                If the document contains a presentation, it is started immediately.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                StatusIndicator
+            </td>
+            <td>
+                Value is an object to use as a progress indicator as the document is loaded or saved.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                SuggestedSaveAsDir
+            </td>
+            <td>
+                Specify the URL that is used next time SaveAs dialog is opened.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                SuggestedSaveAsName
+            </td>
+            <td>
+                Specify the suggested file name that is used next time SaveAs dialog is opened.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                TemplateName
+            </td>
+            <td>
+                Name of the template instead of the URL. Must also use the
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                Argument
+            </td>
+            <td>
+                Description
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+            </td>
+            <td>
+                TemplateRegionName.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                TemplateRegionName
+            </td>
+            <td>
+                Path to the template instead of the URL. Must also use the TemplateName.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                Unpacked
+            </td>
+            <td>
+                OOo stores documents in a zipped format. A value of True stores the file in a folder if it is supported
+                for the component type.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                UpdateDocMode
+            </td>
+            <td>
+                The numeric value specifies how the document is updated. See the API site for the constant
+                com.sun.star.document.UpdateDocMode.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                URL
+            </td>
+            <td>
+                Fully qualified URL of the document to load, including the JumpDescriptor if required.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                Version
+            </td>
+            <td>
+                If versioning is supported for the component, this argument indicates the version to load or save. The
+                main document is loaded or saved if no version is specified.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                ViewControllerName
+            </td>
+            <td>
+                While loading a document into a frame, this specifies the name of the view controller to create. That
+                is, the property is passed to the document's createViewController method. If the loaded document does
+                not support the XModel2 interface, the property is ignored.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                ViewData
+            </td>
+            <td>
+                The value for this argument is component specific and usually supplied by the frame controller.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                ViewId
+            </td>
+            <td>
+                Some components support different views of the same data. The value specifies the view to use after
+                loading. The default is zero and is treated as the default view.
+            </td>
+        </tr>
+    </tbody>
+</table>
+<h2 id="loading-a-template">
+    12.4.2. Loading a template
+</h2>
+<p>
+    While loading a document using LoadComponentFromUrl(), the OOo API treats all documents the same. You can open an
+    OOo template for editing (changing a template and then saving it as a new template) or you can use a template as the
+    starting point for a new document. The named argument AsTemplate directs OOo to open the specified document as a
+    template rather than opening a document for editing. The macro in Listing 263 opens a document as a template.
+    Listing 263. Load a document as a template.
+</p>
+<p>
+    Sub UseTemplate
+</p>
+<p>
+    REM This is an array from 0 To 0 of type PropertyValue
+</p>
+<p>
+    Dim args(0) As New com.sun.star.beans.PropertyValue Dim sURL As String 'URL of the document to load
+</p>
+<p>
+    sURL = "file:///home/andy/doc1.ott" args(0).Name = "AsTemplate" args(0).Value = True
+</p>
+<p>
+    StarDesktop.LoadComponentFromUrl(sURL, "_blank", 0, args()) End Sub
+</p>
+<p>
+    The method LoadComponentFromUrl() assumes that a URL is used to specify the document location; this is not
+    operating-system specific. Although I ran the macro in Listing 263 on my Linux computer, it will work on a Windows
+    computer as well. On a Windows computer, the URL usually includes the drive letter. sURL =
+    "file://c:/home/andy/doc1.ott"
+</p>
+<blockquote>
+    <p>
+        TIP Use the functions ConvertFromURL and ConvertToURL to convert between the operating-system-specific notation
+        and URL notation.
+    </p>
+</blockquote>
+<h2 id="enabling-macros-while-loading-a-document">
+    12.4.3. Enabling macros while loading a document
+</h2>
+<p>
+    When a document that contains a macro is opened from the user interface (UI), a security dialog opens, asking if
+    macros should be run. When a document is loaded from a macro using the OOo API, macros are disabled in the document.
+    Some macros run based on events that occur in a document. If macros are disabled in the document, you can still
+    manually run the contained macros, but the macros that are usually started from an event in the document will never
+    run.
+</p>
+<p>
+    The named argument MacroExecutionMode directs OOo how to treat macros when a document is loaded. Table 99 enumerates
+    the valid values for the MacroExecutionMode argument.
+</p>
+<p>
+    Table 99. com.sun.star.document.MacroExecutionMode constants.
+</p>
+<table border="1">
+    <tbody>
+        <tr class="odd">
+            <td>
+                #
+            </td>
+            <td>
+                Name
+            </td>
+            <td>
+                Description
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                0
+            </td>
+            <td>
+                NEVER_EXECUTE
+            </td>
+            <td>
+                A macro should not be executed at all.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                1
+            </td>
+            <td>
+                FROM_LIST
+            </td>
+            <td>
+                Execute macros from secure list quietly.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                2
+            </td>
+            <td>
+                ALWAYS_EXECUTE
+            </td>
+            <td>
+                Execute any macro, macros signed with trusted certificates and macros from secure list are executed
+                quietly.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                3
+            </td>
+            <td>
+                USE_CONFIG
+            </td>
+            <td>
+                Use configuration to retrieve macro settings. In case a user confirmation is required a dialog is
+                output.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                4
+            </td>
+            <td>
+                ALWAYS_EXECUTE_NO_WARN
+            </td>
+            <td>
+                Macros are always executed without confirmation.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                5
+            </td>
+            <td>
+                USE_CONFIG_REJECT_CONFIRMATION
+            </td>
+            <td>
+                Use configuration to retrieve macro settings. Treat cases when user confirmation required as rejected.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                6
+            </td>
+            <td>
+                USE_CONFIG_APPROVE_CONFIRMATION
+            </td>
+            <td>
+                Use configuration to retrieve macro settings. Treat cases when user confirmation required as approved.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                7
+            </td>
+            <td>
+                FROM_LIST_NO_WARN
+            </td>
+            <td>
+                Execute only macros from secure list. Macros that are not from the list are not executed.
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                8
+            </td>
+            <td>
+                FROM_LIST_AND_SIGNED_WARN
+            </td>
+            <td>
+                Execute only macros from secure list or macros that are signed by trusted certificates.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                9
+            </td>
+            <td>
+                FROM_LIST_AND_SIGNED_NO_WARN
+            </td>
+            <td>
+                Execute only macros from secure list or macros that are signed by trusted certificates. No
+                warning/conformation should be shown.
+            </td>
+        </tr>
+    </tbody>
+</table>
+<p>
+    The macro in Listing 264 loads a document as a template and allows macros to run when the document is loaded. This
+    macro also demonstrates that multiple named arguments can be used simultaneously. Listing 264. Load a document as a
+    template and enable contained macros.
+</p>
+<p>
+    Sub UseTemplateRunMacro
+</p>
+<p>
+    REM This is an array from 0 To 1 of type PropertyValue
+</p>
+<p>
+    Dim args(1) As New com.sun.star.beans.PropertyValue
+</p>
+<p>
+    Dim sURL As String 'URL of the document to load
+</p>
+<p>
+    Print com.sun.star.document.MacroExecMode.USE_CONFIG sURL = "file:///home/andy/doc1.odt" args(0).Name = "AsTemplate"
+    args(0).Value = True
+</p>
+<p>
+    args(1).Name = "MacroExecutionMode"
+</p>
+<p>
+    args(1).Value = com.sun.star.document.MacroExecMode.ALWAYS_EXECUTE_NO_WARN StarDesktop.LoadComponentFromUrl(sURL,
+    "_blank", 0, args()) End Sub
+</p>
+<h2 id="importing-and-exporting">
+    12.4.4. Importing and exporting
+</h2>
+<p>
+    OpenOffice.org has a type-detection mechanism to determine a document’s type when it is loaded. This mechanism has
+    been reliable for the limited number of document types that I deal with daily. Sometimes, however, you must specify
+    the filter name when importing a document. To export a document, you must always specify the export filter type. The
+    code in Listing 265 opens a Microsoft Word document. In my testing the documents opened correctly even when I did
+    not specify the filter name. Listing 265. Specify the filter name while loading a document.
+</p>
+<p>
+    Sub LoadDocFile
+</p>
+<p>
+    Dim noArgs(0) As New com.sun.star.beans.PropertyValue Dim sURL As String noArgs(0).Name = "FilterName"
+</p>
+<p>
+    noArgs(0).Value = "Microsoft Word 97/2000/XP" sURL = "file:///home/andy/one.doc"
+</p>
+<p>
+    StarDesktop.LoadComponentFromUrl(sURL, "_blank", 0, noArgs()) End Sub
+</p>
+<h2 id="filter-names">
+    12.4.5. Filter names
+</h2>
+<p>
+    New filters are frequently added to OOo, so it seems silly to list the supported filters, when a macro can retrieve
+    the latest list. The following macro creates a new Calc document and then displays the list of supported filters. A
+    recorded macro is used to format the data.
+</p>
+<p>
+    The UIName is the general name; or localized name. The Name column contains the internal name to use when specifying
+    a filter name for import or export. The Import and Export columns identify if the filter can be used for import or
+    export. The Options column, indicates if options can be passed to the filter. These options direct the filter.
+</p>
+<p>
+    The filter names are also stored in the file TypeDetection.xcu stored in the OOo configuration folders. Listing 266.
+    List supported filters in a Calc Sheet.
+</p>
+<p>
+    sub FiltersToCalc
+</p>
+<p>
+    Dim oFF ' FilterFactory service Dim oFilterNames ' Array of filter names.
+</p>
+<p>
+    Dim oDoc ' Document created to hold the filter names.
+</p>
+<p>
+    Dim oSheet ' Sheet that will hold the filter information.
+</p>
+<p>
+    Dim oCell ' Cell to update Dim i% ' Index Variable.
+</p>
+<p>
+    Dim fProps() ' Properties for each filter.
+</p>
+<p>
+    Dim fp% ' Filter property index
+</p>
+<p>
+    Dim fpCol% ' Column for the specified filter data.
+</p>
+<p>
+    Dim s$ ' Work string that holds some property values.
+</p>
+<p>
+    Dim iUserData% ' For enumerating array property values.
+</p>
+<p>
+    Dim oProp ' A single property.
+</p>
+<p>
+    Dim oArrayData ' Array of user properties.
+</p>
+<p>
+    Dim sPropNames(7) As String
+</p>
+<p>
+    Dim flags As Long sPropNames(0) = "Name" sPropNames(1) = "Import" sPropNames(2) = "Export" sPropNames(3) = "Options"
+    sPropNames(4) = "Visible" sPropNames(5) = "Flags" sPropNames(6) = "DocumentService" sPropNames(7) = "UIName"
+</p>
+<p>
+    oFF = createUnoService( "com.sun.star.document.FilterFactory" ) oFilterNames = oFF.getElementNames()
+</p>
+<p>
+</p>
+<p>
+    ' Create a Calc doc and save the filter names to it. oDoc = StarDesktop.loadComponentFromURL(
+    "private:factory/scalc", "_blank", 0, Array() ) oSheet = oDoc.getSheets().getByIndex(0)
+</p>
+<p>
+</p>
+<p>
+    ' Print the filter names into a document.
+</p>
+<p>
+    For i = LBound( oFilterNames ) To UBound( oFilterNames ) fProps() = oFF.getByName(oFilterNames(i)) For fp =
+    LBound(fProps) To UBound(fProps) oCell = oSheet.getCellByPosition(fp, i+1) oProp = fProps(fp)
+</p>
+<p>
+    fpCol = FindInArrayAdd(oProp.Name, sPropNames) If fpCol &gt; UBound(sPropNames) Then
+</p>
+<p>
+    ReDim Preserve sPropNames(fpCol) As String sPropNames(fpCol) = oProp.Name
+</p>
+<p>
+    End If
+</p>
+<p>
+    oCell = oSheet.getCellByPosition(fpCol, i+1)
+</p>
+<p>
+    If Not IsArray(oProp.Value) Then oCell.setString(oProp.Value) If oProp.Name = "Flags" Then flags = oProp.Value
+</p>
+<p>
+    oCell.setString(CStr(flags) &amp; " = " &amp; flags_int2str(flags) If flags and 1 Then
+</p>
+<p>
+    oCell = oSheet.getCellByPosition(FindInArrayAdd("Import", sPropNames), i+1) oCell.setString("X")
+</p>
+<p>
+    Endif
+</p>
+<p>
+    If flags and 2 Then
+</p>
+<p>
+    oCell = oSheet.getCellByPosition(FindInArrayAdd("Export", sPropNames), i+1) oCell.setString("X")
+</p>
+<p>
+    Endif
+</p>
+<blockquote>
+    <p>
+        If flags and 128 Then oCell = oSheet.getCellByPosition(FindInArrayAdd("Options", sPropNames), i+1)
+    </p>
+</blockquote>
+<p>
+    oCell.setString("X")
+</p>
+<p>
+    Endif
+</p>
+<p>
+    If ((flags and 4096) or (flags and 8192)) Then
+</p>
+<p>
+    oCell = oSheet.getCellByPosition(FindInArrayAdd("Visible", sPropNames), i+1) oCell.setString("X")
+</p>
+<p>
+    Endif
+</p>
+<p>
+    End If
+</p>
+<p>
+    ElseIf LBound(oProp.Value) &lt;= UBound(oProp.Value) Then s = ""
+</p>
+<p>
+    oArrayData = oProp.Value
+</p>
+<p>
+    For iUserData = LBound(oArrayData) To UBound(oArrayData) If VarType(oArrayData(iUserData)) = 8 Then s = s &amp;
+    "(String:" &amp; oArrayData(iUserData) &amp; ")" Else
+</p>
+<p>
+    s = s &amp; "(" &amp; oArrayData(iUserData).Name &amp; ":" &amp; oArrayData(iUserData).Value &amp; ")" End If Next
+    oCell.setString(s)
+</p>
+<p>
+    End If
+</p>
+<p>
+    Next
+</p>
+<p>
+    Next
+</p>
+<p>
+    For fp = LBound(sPropNames) To Ubound(sPropNames) oCell = oSheet.getCellByPosition(fp, 0)
+    oCell.setString(sPropnames(fp))
+</p>
+<p>
+    Next
+</p>
+<p>
+    FinalFormat(oDoc) End Sub
+</p>
+<p>
+    function flags_int2str(flags as long) as string
+</p>
+<p>
+    Dim cflags as long
+</p>
+<p>
+    Dim strval as string Dim curFlag As Long
+</p>
+<p>
+    cflags = flags
+</p>
+<blockquote>
+    <p>
+        strval = ""
+    </p>
+</blockquote>
+<p>
+    if cflags and &amp;H00000001 then strval = strval + " Import" cflags = cflags-1 endif
+</p>
+<p>
+    if cflags and &amp;H00000002 then strval = strval + " Export" cflags = cflags-2 endif
+</p>
+<p>
+    if cflags and &amp;H00000004 then strval = strval + " Template" cflags = cflags-4 endif
+</p>
+<p>
+    if cflags and &amp;H00000008 then strval = strval + " Internal" cflags = cflags-8 endif
+</p>
+<blockquote>
+    <p>
+        if cflags and &amp;H00000010 then
+    </p>
+</blockquote>
+<p>
+    strval = strval + " TemplatePath" cflags = cflags-16 endif
+</p>
+<p>
+    if cflags and &amp;H00000020 then strval = strval + " Own" cflags = cflags-32 endif
+</p>
+<p>
+    if cflags and &amp;H00000040 then strval = strval + " Alien" cflags = cflags-64 endif
+</p>
+<p>
+    if cflags and &amp;H00000080 then strval = strval + " UseOptions" cflags = cflags-128 endif
+</p>
+<p>
+    if cflags and &amp;H00000100 then strval = strval + " Default" cflags = cflags-256 endif if cflags and
+    &amp;H00000200 then strval = strval + " Executable" cflags = cflags-512 endif if cflags and &amp;H00000400 then
+    strval = strval + " SupportSelection" cflags = cflags-1024 endif if cflags and &amp;H00000800 then strval = strval +
+    " MapToAppPlug" cflags = cflags-2048 endif if cflags and &amp;H00001000 then strval = strval + " NotInFileDialog"
+    cflags = cflags-4096 endif if cflags and &amp;H00002000 then strval = strval + " NotInChooser" cflags = cflags-8192
+    endif if cflags and &amp;H00004000 then strval = strval + " Acynchronas" cflags = cflags-16384 endif if cflags and
+    &amp;H00008000 then strval = strval + " Creator" cflags = cflags-32768 endif if cflags and &amp;H00010000 then
+    strval = strval + " Readonly" cflags = cflags-65536 endif if cflags and &amp;H00020000 then strval = strval + "
+    NotInstalled"
+</p>
+<p>
+    cflags = cflags-131072 endif if cflags and &amp;H00040000 then strval = strval + " ConsultService" cflags =
+    cflags-262144 endif if cflags and &amp;H00080000 then strval = strval + " 3rdPartyFilter" cflags = cflags-524288
+    endif if cflags and &amp;H00100000 then strval = strval + " Packed" cflags = cflags-1048576 endif if cflags and
+    &amp;H00200000 then
+</p>
+<p>
+    strval = strval + " SilentExport" cflags = cflags-2097152 endif
+</p>
+<p>
+    if cflags and &amp;H00400000 then strval = strval + " BrowserPreferred" cflags = cflags-4194304 endif
+</p>
+<p>
+    if cflags and &amp;H00800000 then strval = strval + " [H00800000]" cflags = cflags-8388608 endif
+</p>
+<p>
+    if cflags and &amp;H01000000 then strval = strval + " [H01000000]" cflags = cflags-16777216 endif
+</p>
+<p>
+    if cflags and &amp;H02000000 then strval = strval + " [H02000000]" cflags = cflags-33554432 endif
+</p>
+<p>
+    if cflags and &amp;H10000000 then strval = strval + " Preferred" cflags = cflags-268435456 endif
+</p>
+<p>
+    if cflags &lt;&gt; 0 then
+</p>
+<p>
+    strval = strval + " !!! ATTENTION: unsupported flag ["+cflags+"] detected !!!" endif
+</p>
+<p>
+    flags_int2str = strval end function
+</p>
+<p>
+    Function FindInArrayAdd(sName$, nameArray) As Integer
+</p>
+<p>
+    Dim i As Integer
+</p>
+<blockquote>
+    <p>
+        For i = LBound(nameArray()) To UBound(nameArray()) 'Print nameArray(i) &amp; " and " &amp; sName
+    </p>
+</blockquote>
+<p>
+    If nameArray(i) = sName Then
+</p>
+<p>
+    FindInArrayAdd = i
+</p>
+<p>
+    Exit Function
+</p>
+<p>
+    End If Next
+</p>
+<p>
+    i = UBound(nameArray()) + 1
+</p>
+<p>
+    FindInArrayAdd = i End Function
+</p>
+<p>
+    sub FinalFormat(oDoc)
+</p>
+<p>
+    rem ---------------------------------------------------------------------rem define variables Dim document as object
+    Dim dispatcher as object
+</p>
+<p>
+    rem ----------------------------------------------------------------------
+</p>
+<p>
+    rem get access to the document document = oDoc.CurrentController.Frame
+</p>
+<p>
+    dispatcher = createUnoService("com.sun.star.frame.DispatchHelper")
+</p>
+<p>
+    rem ----------------------------------------------------------------------
+</p>
+<p>
+    Dim args1(0) as new com.sun.star.beans.PropertyValue args1(0).Name = "ToPoint" args1(0).Value = "$A$1"
+    dispatcher.executeDispatch(document, ".uno:GoToCell", "", 0, args1())
+</p>
+<p>
+    rem ----------------------------------------------------------------------
+</p>
+<p>
+    Dim args2(1) as new com.sun.star.beans.PropertyValue args2(0).Name = "By" args2(0).Value = 1 args2(1).Name = "Sel"
+    args2(1).Value = true dispatcher.executeDispatch(document, ".uno:GoRightToEndOfData", "", 0, args2())
+</p>
+<p>
+    rem ----------------------------------------------------------------------
+</p>
+<p>
+    Dim args3(2) as new com.sun.star.beans.PropertyValue args3(0).Name = "FontHeight.Height" args3(0).Value = 12
+    args3(1).Name = "FontHeight.Prop" args3(1).Value = 100 args3(2).Name = "FontHeight.Diff" args3(2).Value = 0
+    dispatcher.executeDispatch(document, ".uno:FontHeight", "", 0, args3())
+</p>
+<p>
+    rem ----------------------------------------------------------------------
+</p>
+<p>
+    Dim args4(0) as new com.sun.star.beans.PropertyValue args4(0).Name = "Bold" args4(0).Value = true
+    dispatcher.executeDispatch(document, ".uno:Bold", "", 0, args4())
+</p>
+<p>
+    rem ----------------------------------------------------------------------
+</p>
+<p>
+    Dim args5(0) as new com.sun.star.beans.PropertyValue args5(0).Name = "HorizontalAlignment"
+</p>
+<p>
+    args5(0).Value = com.sun.star.table.CellHoriJustify.CENTER dispatcher.executeDispatch(document,
+    ".uno:HorizontalAlignment", "", 0, args5())
+</p>
+<p>
+    rem ----------------------------------------------------------------------
+</p>
+<p>
+    Dim args6(1) as new com.sun.star.beans.PropertyValue args6(0).Name = "By" args6(0).Value = 1 args6(1).Name = "Sel"
+    args6(1).Value = true dispatcher.executeDispatch(document, ".uno:GoDownToEndOfData", "", 0, args6()) rem
+    ----------------------------------------------------------------------
+</p>
+<p>
+    Dim args7(0) as new com.sun.star.beans.PropertyValue args7(0).Name = "aExtraWidth" args7(0).Value = 254
+    dispatcher.executeDispatch(document, ".uno:SetOptimalColumnWidth", "", 0, args7())
+</p>
+<p>
+    rem ----------------------------------------------------------------------
+</p>
+<p>
+    Dim args8(8) as new com.sun.star.beans.PropertyValue args8(0).Name = "ByRows" args8(0).Value = true args8(1).Name =
+    "HasHeader" args8(1).Value = true args8(2).Name = "CaseSensitive" args8(2).Value = false args8(3).Name =
+    "IncludeAttribs" args8(3).Value = true args8(4).Name = "UserDefIndex" args8(4).Value = 0 args8(5).Name = "Col1"
+    args8(5).Value = 7 args8(6).Name = "Ascending1" args8(6).Value = true args8(7).Name = "Col2" args8(7).Value = 1
+    args8(8).Name = "Ascending2" args8(8).Value = true
+</p>
+<p>
+    dispatcher.executeDispatch(document, ".uno:DataSort", "", 0, args8()) dispatcher.executeDispatch(document,
+    ".uno:GoToCell", "", 0, args1()) end sub
+</p>
+<h2 id="loading-and-saving-documents">
+    12.4.6. Loading and saving documents
+</h2>
+<p>
+    The desktop or a frame is used to load a document. To store a document, use the method storeToURL(), which is
+    implemented by the Document object. The first argument to this method is the URL to which the document will be
+    stored. The second argument is an array of named arguments (see Table 98). To export a document to a different type,
+    the FilterName must specify the document export type. The code in Listing 267 exports a Writer document to a PDF
+    file. Listing 267. Export the current document, assuming it is a Writer document, as PDF.
+</p>
+<p>
+    Dim args(0) as new com.sun.star.beans.PropertyValue args(0).Name = "FilterName" args(0).Value = "writer_pdf_Export"
+</p>
+<p>
+    ThisComponent.storeToURL("file:///test.pdf",args())
+</p>
+<p>
+    TIP Filter names are case sensitive.
+</p>
+<p>
+    Some Calc import and export filters support options; for example, DIF, dBase, and Lotus filters all use the same
+    filter option, a numeric index that identifies which character set to use for single-byte characters.
+</p>
+<p>
+    Listing 268. The DIF, dBase, and Lotus filters all use the same filter option.
+</p>
+<p>
+    Dim args(1) as new com.sun.star.beans.PropertyValue args(0).Name = "FilterName" args(0).Value = "dBase"
+</p>
+<p>
+    args(1).Name = "FilterOptions" 'Identify character set for single-byte chars args(1).Value = 0 'System character set
+</p>
+<p>
+    More detailed information on CSV files is found in AndrewBase.odt.
+</p>
+<p>
+    The discussion of the CSV filter assumes familiarity with the CSV file format. If you aren’t familiar with this
+    format, feel free to skip this section. The Text CSV filter, unlike the dBase filter, uses a complicated string
+    containing five tokens. Each token can contain multiple values separated by a slash mark (/). The tokens are then
+    separated by a comma (,). Listing 269. The CSV filter options are complicated.
+</p>
+<p>
+    Dim args(1) as new com.sun.star.beans.PropertyValue args(0).Name = "FilterName"
+</p>
+<p>
+    args(0).Value = "scalc: Text - txt - csv (StarCalc)" args(1).Name = "FilterOptions"
+</p>
+<p>
+    args(1).Value = "44,34,0,1,1/5/2/1/3/1/4/1"
+</p>
+<p>
+    The first token contains the field separators as ASCII values. For example, to specify a comma as the delimiter, use
+    the ASCII value 44 (see Listing 269). To specify that some fields are separated by a a space (ASCII 32) and some are
+    separated by a tab (ASCII 9), Listing 269 would use “32/9,34,0,1,1/5/2/1/3/1/4/1” for the filter options.
+</p>
+<p>
+    In a CSV file, the text portions are usually surrounded by either double quotation marks (") or single quotation
+    marks ('). Listing 269 specifies that text portions should be surrounded by double quotation marks, using an ASCII
+    value of 34. If you want to use multiple text delimiters, separate them with a slash.
+</p>
+<p>
+    The third token identifies the character set to use; this is the same value used to identify the character set in
+    the DIF, dBase, and Lotus filters. The code in Listing 269 specifies a zero for the character set.
+</p>
+<p>
+    The fourth token identifies the first line to import — typically line one. Listing 269 specifies that the first line
+    of text should be input.
+</p>
+<p>
+    The last token identifies the format of each column in the CSV file. The columns can be formatted as either
+    delimited text (see Listing 270) or as fixed-width text (see Listing 271). Listing 270. Delimited-text-format string
+    for the CSV filter.
+</p>
+<p>
+    &lt;field_num&gt;/&lt;format&gt;/&lt;field_num&gt;/&lt;format&gt;/&lt;field_num&gt;/&lt;format&gt;/...
+</p>
+<p>
+    The &lt;field_num&gt; is an integer that identifies a field, where 1 is the leftmost field. For example, given the
+    fields “one”, “two”, and “three”, a field_num of 2 refers to “two”. The &lt;format&gt; is an integer that identifies
+    the format of the field (see Table 100). The code in Listing 269 specifies that fields one through four use a format
+    of 1, which is the standard format.
+</p>
+<p>
+    Table 100. CSV field format values.
+</p>
+<table border="1">
+    <tbody>
+        <tr class="odd">
+            <td>
+                Format
+            </td>
+            <td>
+                Description
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                1
+            </td>
+            <td>
+                Standard
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                2
+            </td>
+            <td>
+                Text
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                3
+            </td>
+            <td>
+                MM/DD/YY
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                4
+            </td>
+            <td>
+                DD/MM/YY
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                5
+            </td>
+            <td>
+                YY/MM/DD
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                Format
+            </td>
+            <td>
+                Description
+            </td>
+        </tr>
+        <tr class="even">
+            <td>
+                9
+            </td>
+            <td>
+                Do not import; ignore this field.
+            </td>
+        </tr>
+        <tr class="odd">
+            <td>
+                10
+            </td>
+            <td>
+                Import a number formatted in the US-English locale regardless of the current locale.
+            </td>
+        </tr>
+    </tbody>
+</table>
+<p>
+    Listing 271. Fixed-width-columns format string for the CSV filter.
+</p>
+<p>
+    FIX/&lt;start&gt;/&lt;format&gt;/&lt;start&gt;/&lt;format&gt;/&lt;start&gt;/&lt;format&gt;/...
+</p>
+<p>
+    Tell the filter that the file uses a fixed-width format by using the text “FIX” as the first portion of the last
+    token. Fixed-width CSV files identify fields by specifying where each field starts (see Listing 271). The
+    &lt;start&gt; value specifies the first character in a field. A start of 0 refers to the leftmost character of the
+    text. The &lt;format&gt; is an integer that identifies the format of the text (see Table 100).
+</p>
+<h2 id="error-handling-while-loading-a-document">
+    12.4.7. Error handling while loading a document
+</h2>
+<p>
+    Exceptions are not thrown while loading a document; instead, errors are thrown using an interaction handler that is
+    passed as a named argument. Unfortunately, you cannot implement an OOo Basic interaction handler. The OOo
+    Developer’s Guide, however, has examples of error handlers using other languages. In other words, in BASIC, you
+    cannot trap errors while loading a document; the document simply fails to load and returns null.
+</p>
+<p>
+    The Graphical User Interface (GUI) provides an interaction handler that interacts with the user. The GUI’s
+    interaction handler displays error messages when errors occur and prompts the user for a password if it is required.
+    If no handler is included as a named argument, a default handler is used. The default handler simply ignores most
+    errors, providing little feedback to the user.
+</p>
+<h1 id="conclusion">
+    12.5. Conclusion
+</h1>
+<p>
+    The desktop acts as the main application that controls OpenOffice.org, so when you need to obtain something that is
+    globally related to the documents or frames, look at the desktop. The globally available variables StarDesktop and
+    ThisComponent provide easy access to the OOo Desktop object and the current document. This chapter introduced
+    techniques for accessing containers with multiple objects. Familiarize yourself with the basic capabilities for
+    opening documents, for importing and exporting file types, and the capabilities and limitations of OOo, in order to
+    expand your ability to use and create a wide variety of file types within the OOo environment.
+</p>
